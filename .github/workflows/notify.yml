@@ -1,0 +1,33 @@
+name: EC New Item Notifier
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # 15分おき（UTC基準）
+  workflow_dispatch:          # 手動実行ボタン用（動作確認に便利）
+
+# 前回の実行が長引いても、同時に2つ走らないようにする
+concurrency:
+  group: notifier
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run notifier
+        env:
+          RAKUTEN_APP_ID: ${{ secrets.RAKUTEN_APP_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python main.py
